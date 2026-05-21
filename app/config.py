@@ -23,5 +23,10 @@ class Settings(BaseSettings):
     http_referer: str = "http://localhost:8000"
     x_title: str = "Incident KB Assistant"
 
+    # LangSmith tracing
+    langchain_tracing_v2: str = "false"
+    langchain_api_key: str = ""
+    langchain_project: str = "incident-kb-assistant"
+
 
 settings = Settings()

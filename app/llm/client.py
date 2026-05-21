@@ -1,6 +1,7 @@
 import json
 from typing import Any
 
+from langsmith import traceable
 from openai import AsyncOpenAI
 
 from app.llm.prompts import (
@@ -35,6 +36,7 @@ class ClaudeClient:
         self._total_input_tokens = 0
         self._total_output_tokens = 0
 
+    @traceable(name="openrouter_chat")
     async def _chat(self, system: str, user: str, max_tokens: int = 1024) -> str:
         response = await self.client.chat.completions.create(
             model=self.model,
@@ -50,6 +52,7 @@ class ClaudeClient:
             self._total_output_tokens += usage.completion_tokens
         return response.choices[0].message.content or ""
 
+    @traceable(name="generate_resolution")
     async def generate_resolution(
         self,
         query: str,
@@ -66,11 +69,13 @@ class ClaudeClient:
         routing = self._extract_routing(text, incidents)
         return text, routing
 
+    @traceable(name="classify_priority")
     async def classify_priority(self, description: str, impact: int = 2, urgency: int = 2) -> TriageResponse:
         prompt = TRIAGE_PROMPT.format(description=description, impact=impact, urgency=urgency)
         text = await self._chat(SYSTEM_PROMPT, prompt, max_tokens=512)
         return self._parse_triage(text)
 
+    @traceable(name="analyze_root_cause")
     async def analyze_root_cause(self, incidents: list[RetrievedIncident]) -> dict[str, Any]:
         incidents_xml = format_incidents_xml(incidents, 6000)
         prompt = RCA_PROMPT.format(incidents_xml=incidents_xml)
